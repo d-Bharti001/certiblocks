@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./Students.sol";
+import "./Authorities.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-contract CertiContract is StudentsContract {
+contract CertiContract is AuthoritiesContract {
 
   using EnumerableSet for EnumerableSet.Bytes32Set;
 
@@ -16,12 +16,13 @@ contract CertiContract is StudentsContract {
     uint totalMarks;
     uint timestamp;
     string courseName;
+    string studentName;
   }
 
   EnumerableSet.Bytes32Set certificates;
   mapping (bytes32 => CertificateInfo) public certificateInfo;
 
-  event Certify (
+  event CertificateGenerated (
     address indexed studAddr,
     address indexed providerAddr,
     bytes32 certId,
@@ -29,25 +30,33 @@ contract CertiContract is StudentsContract {
     string indexed courseName
   );
 
-  function certifyStudent(bytes32 _id, address _stud, uint _marks, uint _totalMarks, string memory _course) public onlyTeacher {
+  function certify(
+    bytes32 _id,
+    address _studAddr,
+    uint _marks,
+    uint _totalMarks,
+    string memory _course,
+    string memory _studName
+  ) public onlyAuthority {
     require(uint(_id) != 0, "Invalid certificate id");
-    require(StudentsContract.checkStudentRegistered(_stud), "Student account not registered");
-    require(_marks <= 1000, "Marks must be max. 1000");
-    require(bytes(_course).length > 0, "Invalid course name");
+    require(AuthoritiesContract.checkIfRegistered(_studAddr) == false, "Authority account can't be certified");
+    require(bytes(_course).length > 0, "Empty course name!");
+    require(bytes(_studName).length > 0, "Empty student name!");
     require(_marks <= _totalMarks, "Obtained marks can't be more than total marks");
 
     require(certificates.add(_id) == true, "Certificate ID already present");
     CertificateInfo memory _certificate;
     _certificate.certificateId = _id;
-    _certificate.studentAddr = _stud;
+    _certificate.studentAddr = _studAddr;
     _certificate.certProviderAddr = msg.sender;
     _certificate.marks = _marks;
     _certificate.totalMarks = _totalMarks;
     _certificate.timestamp = block.timestamp;
     _certificate.courseName = _course;
+    _certificate.studentName = _studName;
     certificateInfo[_id] = _certificate;
 
-    emit Certify(_stud, msg.sender, _id, block.timestamp, _course);
+    emit CertificateGenerated(_studAddr, msg.sender, _id, block.timestamp, _course);
   }
 
   function getCertificateCount() public view returns(uint) {
@@ -62,7 +71,8 @@ contract CertiContract is StudentsContract {
     uint marks,
     uint totalMarks,
     uint timestamp,
-    string memory courseName
+    string memory courseName,
+    string memory studentName
   )
   {
     if (_index < getCertificateCount()) {
@@ -74,11 +84,12 @@ contract CertiContract is StudentsContract {
         cert.marks,
         cert.totalMarks,
         cert.timestamp,
-        cert.courseName
+        cert.courseName,
+        cert.studentName
       );
     }
     else {
-      return (bytes32(0), address(0), address(0), 0, 0, 0, "");
+      return (bytes32(0), address(0), address(0), 0, 0, 0, "", "");
     }
   }
 
