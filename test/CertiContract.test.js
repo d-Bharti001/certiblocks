@@ -2,11 +2,11 @@ const CertiContract = artifacts.require("./CertiContract.sol");
 
 const { expect } = require("chai");
 const chai = require("chai");
-const chaiAsPromised = require("chai-as-promised")
-const BN = web3.utils.BN
-const chaiBN = require("chai-bn")(BN)
-chai.use(chaiAsPromised)
-chai.use(chaiBN)
+const chaiAsPromised = require("chai-as-promised");
+const BN = web3.utils.BN;
+const chaiBN = require("chai-bn")(BN);
+chai.use(chaiAsPromised);
+chai.use(chaiBN);
 
 function generateRandomID() {
   let t = new Date().getTime().toString();
@@ -16,149 +16,87 @@ function generateRandomID() {
 
 contract("CertiContract test", accounts => {
 
-  const [owner, teacher1, teacher2, student1, student2, anotherAcc] = accounts
+  const [owner, acc1, acc2, acc3, acc4] = accounts
 
   describe("Ownership", () => {
     it("Should have the rightful owner", async () => {
-      let instance = await CertiContract.new();
+      let instance = await CertiContract.deployed();
       await expect(await instance.owner()).to.be.equal(owner);
     });
+    it("Owner should be registered as an authority", async () => {
+      let instance = await CertiContract.deployed();
+      await expect(await instance.checkIfRegistered(owner)).to.be.equal(true);
+      await expect(await instance.getAuthorityCount()).to.be.a.bignumber.equal(new BN(1));
+    });
   });
 
-  describe("Teachers", () => {
+  describe("Authorities", () => {
     beforeEach(async () => {
       this.Contract = await CertiContract.new();
     });
 
-    it("Owner should be able to enroll new teachers", async () => {
+    it("Owner should be able to register new authorities", async () => {
       let instance = this.Contract;
-      await expect(instance.registerNewTeacher(teacher1, "Nikhil Gupta", {from: owner})).to.eventually.be.fulfilled;
-      await expect(instance.registerNewTeacher(teacher2, "Suraj Prabhakar", {from: owner})).to.eventually.be.fulfilled;
-      // Teacher count should be 2
-      await expect(await instance.getTeacherCount()).to.be.a.bignumber.equal(new BN(2));
+      await expect(instance.registerNewAuthority(acc1, { from: owner })).to.eventually.be.fulfilled;
+      await expect(instance.registerNewAuthority(acc2, { from: owner })).to.eventually.be.fulfilled;
+      await expect(await instance.getAuthorityCount()).to.be.a.bignumber.equal(new BN(3));
     });
 
-    it("Same account can't be registered again as a teacher", async () => {
+    it("Same account can't be registered again", async () => {
       let instance = this.Contract;
-      await expect(instance.registerNewTeacher(teacher1, "Nikhil Gupta")).to.eventually.be.fulfilled;
-      await expect(instance.registerNewTeacher(teacher1, "Nikhil")).to.eventually.be.rejectedWith("Address already registered");
-    })
-
-    it("Registered teacher can't enroll new teachers", async () => {
-      let instance = this.Contract;
-      await expect(instance.registerNewTeacher(teacher1, "Nikhil Gupta", {from: owner})).to.eventually.be.fulfilled;
-      await expect(await instance.checkTeacherRegistered(teacher1)).to.be.equal(true);
-      await expect(instance.registerNewTeacher(teacher2, "Suraj Prabhakar", {from: teacher1})).to.eventually.be.rejectedWith("You are not the owner");
-      });
-
-    it("Unregistered account can't enroll new teachers", async () => {
-      let instance = this.Contract;
-      await expect(instance.registerNewTeacher(teacher2, "Suraj Prabhakar", {from: anotherAcc})).to.eventually.be.rejected;
-    });
-  });
-
-  describe("Students", () => {
-    beforeEach(async () => {
-      this.Contract = await CertiContract.new();
-      await this.Contract.registerNewTeacher(teacher1, "Nikhil Gupta");
+      await expect(instance.registerNewAuthority(acc1, { from: owner })).to.eventually.be.fulfilled;
+      await expect(instance.registerNewAuthority(acc1, { from: owner })).to.eventually.be.rejectedWith("Address already registered");
     });
 
-    it("Should have teacher1 registered", async () => {
+    it("Unregistered account can't register new authorities", async () => {
       let instance = this.Contract;
-      await expect(await instance.checkTeacherRegistered(teacher1)).to.be.equal(true);
+      await expect(instance.registerNewAuthority(acc1, { from: acc3 })).to.eventually.be.rejectedWith("You are not the owner");
     });
 
-    it("Registered teacher should be able enroll new students", async () => {
+    it("Registered authority other than owner can't register new authorities", async () => {
       let instance = this.Contract;
-      await expect(instance.registerNewStudent(student1, "Rahul Kumar", {from: teacher1})).to.eventually.be.fulfilled;
-      await expect(instance.registerNewStudent(student2, "Rahul Raj", {from: teacher1})).to.eventually.be.fulfilled;
-      // Student count should be 2
-      await expect(await instance.getStudentCount()).to.be.a.bignumber.equal(new BN(2));
-    });
-
-    it("Same account can't be registered again as a student", async () => {
-      let instance = this.Contract;
-      await expect(instance.registerNewStudent(student1, "Rahul Kumar", {from: teacher1})).to.eventually.be.fulfilled;
-      await expect(instance.registerNewStudent(student1, "Rahul Kumar", {from: teacher1}))
-        .to.eventually.be.rejectedWith("Address already registered");
-    })
-
-    it("Registered student can't enroll new students", async () => {
-      let instance = this.Contract;
-      await expect(instance.registerNewStudent(student1, "Rahul Kumar", {from: teacher1})).to.eventually.be.fulfilled;
-      await expect(await instance.checkStudentRegistered(student1)).to.be.equal(true);
-      await expect(instance.registerNewStudent(student2, "Rahul Raj", {from: student2}))
-        .to.eventually.be.rejectedWith("Only a registered teacher account can carry out this action");
-    });
-
-    it("Owner can't enroll new students", async () => {
-      let instance = this.Contract;
-      await expect(instance.registerNewStudent(student1, "Rahul Kumar"))
-        .to.eventually.be.rejectedWith("Only a registered teacher account can carry out this action");
-    });
-
-    it("Unregistered account can't enroll new students", async () => {
-      let instance = this.Contract;
-      await expect(instance.registerNewStudent(student1, "Rahul Kumar", {from: anotherAcc}))
-        .to.eventually.be.rejectedWith("Only a registered teacher account can carry out this action");
-    });
-
-    it("Student account can't enroll new teachers", async () => {
-      let instance = this.Contract;
-      await expect(instance.registerNewStudent(student1, "Rahul Kumar", {from: teacher1})).to.eventually.be.fulfilled;
-      await expect(instance.registerNewTeacher(teacher2, "Suraj", {from: student1}))
-        .to.eventually.be.rejectedWith("You are not the owner");
+      await expect(instance.registerNewAuthority(acc1, { from: owner })).to.eventually.be.fulfilled;
+      await expect(instance.registerNewAuthority(acc2, { from: acc1 })).to.eventually.be.rejectedWith("You are not the owner");
     });
   });
 
   describe("Certifications", () => {
     beforeEach(async () => {
       this.Contract = await CertiContract.new();
-      await this.Contract.registerNewTeacher(teacher1, "Nikhil", {from: owner});
-      await this.Contract.registerNewStudent(student1, "Rahul Kumar", {from: teacher1});
+      await this.Contract.registerNewAuthority(acc1, { from: owner });
+      await this.Contract.registerNewAuthority(acc2, { from: owner });
     });
 
     it("Should have the intended accounts registered", async () => {
       let instance = this.Contract;
-      await expect(await instance.checkTeacherRegistered(teacher1)).to.be.equal(true);
-      await expect(await instance.checkStudentRegistered(student1)).to.be.equal(true);
+      await expect(await instance.checkIfRegistered(owner)).to.be.equal(true);
+      await expect(await instance.checkIfRegistered(acc1)).to.be.equal(true);
+      await expect(await instance.checkIfRegistered(acc2)).to.be.equal(true);
     });
 
-    it("Teacher should be able to certify student", async () => {
+    it("Registered account should be able to certify students", async () => {
       let instance = this.Contract;
-      await expect(instance.certifyStudent(generateRandomID(), student1, 63, 100, "Python", {from: teacher1})).to.eventually.be.fulfilled;
+      await expect(instance.certify(generateRandomID(), acc3, 85, 100, "Python", "Rahul", { from: acc1 })).to.eventually.be.fulfilled;
     });
 
     it("Same Certification ID can't be registered again", async () => {
       let instance = this.Contract;
       let certificateId = generateRandomID();
-      await expect(instance.certifyStudent(certificateId, student1, 63, 100, "Python", {from: teacher1})).to.eventually.be.fulfilled;
-      await expect(instance.certifyStudent(certificateId, student1, 93, 100, "Python", {from: teacher1}))
+      await expect(instance.certify(certificateId, acc3, 85, 100, "Python", "Rahul", { from: acc1 })).to.eventually.be.fulfilled;
+      await expect(instance.certify(certificateId, acc4, 93, 100, "Python", "Shubham", { from: acc2 }))
         .to.eventually.be.rejectedWith("Certificate ID already present");
-    });
-
-    it("Student can't generate certificates", async () => {
-      let instance = this.Contract;
-      await expect(instance.certifyStudent(generateRandomID(), student1, 63, 100, "Python", {from: student1}))
-        .to.eventually.be.rejectedWith("Only a registered teacher account can carry out this action");
-    });
-
-    it("Owner can't generate certificates", async () => {
-      let instance = this.Contract;
-      await expect(instance.certifyStudent(generateRandomID(), student1, 63, 100, "Python", {from: owner}))
-        .to.eventually.be.rejectedWith("Only a registered teacher account can carry out this action");
     });
 
     it("Unregistered account can't generate certificates", async () => {
       let instance = this.Contract;
-      await expect(instance.certifyStudent(generateRandomID(), student1, 63, 100, "Python", {from: teacher2}))
-        .to.eventually.be.rejectedWith("Only a registered teacher account can carry out this action");
+      await expect(instance.certify(generateRandomID(), acc4, 85, 100, "Python", "Rahul", { from: acc3 }))
+        .to.eventually.be.rejectedWith("Only a registered authority can carry out this action");
     });
 
-    it("Unregistered account can't be certified", async () => {
+    it("Authority account can't be certified", async () => {
       let instance = this.Contract;
-      await expect(instance.certifyStudent(generateRandomID(), student2, 63, 100, "Python", {from: teacher1}))
-        .to.eventually.be.rejectedWith("Student account not registered");
+      await expect(instance.certify(generateRandomID(), acc2, 85, 100, "Python", "Prakhar", { from: acc1 }))
+        .to.eventually.be.rejectedWith("Authority account can't be certified");
     });
   });
 });
