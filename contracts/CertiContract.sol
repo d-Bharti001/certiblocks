@@ -39,7 +39,7 @@ contract CertiContract is AuthoritiesContract {
     string memory _studName
   ) public onlyAuthority {
     require(uint(_id) != 0, "Invalid certificate id");
-    require(AuthoritiesContract.checkIfRegistered(_studAddr) == false, "Authority account can't be certified");
+    require(_studAddr != msg.sender, "You can't certify yourself");
     require(bytes(_course).length > 0, "Empty course name!");
     require(bytes(_studName).length > 0, "Empty student name!");
     require(_marks <= _totalMarks, "Obtained marks can't be more than total marks");
