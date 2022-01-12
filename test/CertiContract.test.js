@@ -93,10 +93,10 @@ contract("CertiContract test", accounts => {
         .to.eventually.be.rejectedWith("Only a registered authority can carry out this action");
     });
 
-    it("Authority account can't be certified", async () => {
+    it("An account can't certify itself", async () => {
       let instance = this.Contract;
-      await expect(instance.certify(generateRandomID(), acc2, 85, 100, "Python", "Prakhar", { from: acc1 }))
-        .to.eventually.be.rejectedWith("Authority account can't be certified");
+      await expect(instance.certify(generateRandomID(), acc2, 85, 100, "Python", "Prakhar", { from: acc2 }))
+        .to.eventually.be.rejectedWith("You can't certify yourself");
     });
   });
 });
