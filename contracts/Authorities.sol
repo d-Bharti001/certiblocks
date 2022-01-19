@@ -12,7 +12,8 @@ contract AuthoritiesContract is Ownable {
   EnumerableSet.AddressSet authorities;
 
   event AuthorityRegistered (
-    address indexed addr
+    address indexed addr,
+    uint timestamp
   );
 
   constructor() {
@@ -27,7 +28,7 @@ contract AuthoritiesContract is Ownable {
   function registerNewAuthority(address _addr) public onlyOwner {
     require(_addr != address(0), "Invalid address");
     require(authorities.add(_addr) == true, "Address already registered");
-    emit AuthorityRegistered(_addr);
+    emit AuthorityRegistered(_addr, block.timestamp);
   }
 
   function getAuthorityCount() public view returns(uint) {

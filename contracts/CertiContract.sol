@@ -27,7 +27,7 @@ contract CertiContract is AuthoritiesContract {
     address indexed providerAddr,
     bytes32 certId,
     uint timestamp,
-    string indexed courseName
+    string courseName
   );
 
   function certify(
