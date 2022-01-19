@@ -39,6 +39,7 @@ contract CertiContract is AuthoritiesContract {
     string memory _studName
   ) public onlyAuthority {
     require(uint(_id) != 0, "Invalid certificate id");
+    require(_studAddr != address(0), "Invalid student address");
     require(_studAddr != msg.sender, "You can't certify yourself");
     require(bytes(_course).length > 0, "Empty course name!");
     require(bytes(_studName).length > 0, "Empty student name!");
