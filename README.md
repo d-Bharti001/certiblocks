@@ -16,6 +16,7 @@ A blockchain based certification add-on for educational platforms
 * **Ethereum Smart Contract** - For secure back-end logic on blockchain
 * **Truffle** - Project developed using Truffle framework
 * **Ganache** - Local Blockchain for testing
+* **Infura** - For deploying smart contract on public network
 * **Metamask** - Wallet for accounts
 * **Firebase** - Website hosted on Google's Firebase
 * **ReactJS** - Website made using ReactJS
