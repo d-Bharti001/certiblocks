@@ -11,7 +11,7 @@ const networks = {
   '5777': 'Local Ganache Network',
 }
 
-const expectedNetworkId = '5777'  // Local Ganache Network
+const expectedNetworkId = '5'  // Goerli Test Network
 
 export const courses = [
   'Python',
