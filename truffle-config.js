@@ -15,15 +15,15 @@ module.exports = {
       port: 7545,
       network_id: 5777
     },
-    kovan_infura: {
+    goerli_infura: {
       provider: function () {
         return new HDWalletProvider({
           mnemonic: process.env.MNEMONIC,
-          providerOrUrl: `https://kovan.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+          providerOrUrl: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
           addressIndex: 0,
         })
       },
-      network_id: 42
+      network_id: 5
     }
   },
   compilers: {
